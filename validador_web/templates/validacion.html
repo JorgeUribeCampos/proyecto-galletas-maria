@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel de Validación - Análisis Cultural</title>
+    <!-- Usamos Tailwind CSS para un diseño limpio y moderno sin archivos locales -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Pequeños ajustes para mejorar la legibilidad */
+        body { font-family: 'Inter', sans-serif; }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800">
+
+    <div class="container mx-auto p-4 md:p-8">
+        
+        <!-- Cabecera -->
+        <header class="mb-8 p-6 bg-white rounded-lg shadow-sm border border-gray-200">
+            <h1 class="text-3xl font-bold text-gray-900">Panel de Validación de Insights</h1>
+            <p class="text-gray-600 mt-1">Proyecto: Galletas María y Maternidad</p>
+        </header>
+
+        <!-- Contenedor Principal -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+
+            <!-- Columna Izquierda: Post Original y Análisis IA -->
+            <div class="lg:col-span-2 bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+                
+                <h2 class="text-xl font-semibold mb-1">Análisis de la Conversación</h2>
+                <p class="text-sm text-gray-500 mb-4">ID: {{ conversacion.id_conversacion }} | <a href="{{ conversacion.url_post }}" target="_blank" class="text-blue-600 hover:underline">Ver Post Original</a></p>
+
+                <div class="border-t border-gray-200 pt-4">
+                    <h3 class="font-semibold text-lg mb-2">Post del Creador:</h3>
+                    <blockquote class="bg-gray-50 p-4 rounded-md border-l-4 border-blue-500 text-gray-700 italic">
+                        "{{ conversacion.texto_post_original }}"
+                    </blockquote>
+                </div>
+
+                <div class="mt-6 border-t border-gray-200 pt-4">
+                    <h3 class="font-semibold text-lg mb-3">Análisis Generado por IA:</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                        <div class="bg-blue-50 p-3 rounded-md">
+                            <p class="font-medium text-blue-800">Emoción Principal Detectada:</p>
+                            <p class="text-lg font-semibold text-blue-900">{{ conversacion.analisis_ia.emocion_principal }} (Conf: {{ conversacion.analisis_ia.confianza_emocion * 100 }}%)</p>
+                        </div>
+                        <div class="bg-green-50 p-3 rounded-md">
+                            <p class="font-medium text-green-800">Contexto Ritual:</p>
+                            <p class="text-lg font-semibold text-green-900">{{ conversacion.analisis_ia.contexto_ritual }}</p>
+                        </div>
+                        <div class="bg-purple-50 p-3 rounded-md col-span-1 md:col-span-2">
+                            <p class="font-medium text-purple-800">Resonancia Emocional Comunitaria:</p>
+                            <p class="text-lg font-semibold text-purple-900">{{ conversacion.analisis_ia.resonancia_emocional }}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-6 border-t border-gray-200 pt-4">
+                    <h3 class="font-semibold text-lg mb-3">Comentarios Destacados de la Comunidad:</h3>
+                    <div class="space-y-4">
+                        {% for comentario in conversacion.comentarios_destacados %}
+                        <div class="bg-gray-50 p-3 rounded-md border border-gray-200">
+                            <p class="text-gray-700">"{{ comentario.texto }}"</p>
+                            <p class="text-right text-xs font-medium text-gray-500 mt-1">Análisis IA: <span class="font-semibold">{{ comentario.analisis_ia }}</span></p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Columna Derecha: Formulario de Validación -->
+            <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200 h-fit">
+                <h2 class="text-xl font-semibold mb-4 border-b pb-3">Formulario del Experto</h2>
+                <form>
+                    <div class="space-y-5">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">1. Precisión de la Emoción Principal:</label>
+                            <select class="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                                <option>Seleccionar...</option>
+                                <option>Totalmente Correcta</option>
+                                <option>Parcialmente Correcta</option>
+                                <option>Incorrecta</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">2. Precisión del Contexto Ritual:</label>
+                            <select class="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                                <option>Seleccionar...</option>
+                                <option>Totalmente Correcto</option>
+                                <option>Parcialmente Correcto</option>
+                                <option>Incorrecto</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">3. Notas Adicionales del Validador:</label>
+                            <textarea rows="5" class="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" placeholder="Añadir observaciones cualitativas, matices culturales no detectados, etc."></textarea>
+                        </div>
+                        <div>
+                            <button type="submit" class="w-full bg-blue-600 text-white font-bold py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                                Enviar Validación
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+        </div>
+    </div>
+
+</body>
+</html>
+
