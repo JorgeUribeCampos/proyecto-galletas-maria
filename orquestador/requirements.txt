@@ -1,0 +1,4 @@
+# orquestador/requirements.txt
+
+functions-framework==3.*
+requests==2.31.0
