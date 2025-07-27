@@ -1,0 +1,2 @@
+# recolector/requirements.txt
+selenium==4.11.2

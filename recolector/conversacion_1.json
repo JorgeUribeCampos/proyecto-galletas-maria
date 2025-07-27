@@ -1,0 +1,42 @@
+{
+    "id_conversacion": "web_Wikipedia,_la_encicl",
+    "fuente_principal": {
+        "tipo_contenido": "post_creador",
+        "texto_input": "",
+        "metadatos": {
+            "url_post": "https://es.wikipedia.org/wiki/Wikipedia:Portada"
+        }
+    },
+    "respuestas_comunidad": [
+        {
+            "id_respuesta": "comment_1",
+            "tipo_contenido": "comentario",
+            "texto_input": "la enciclopedia de contenido libre\nque todos pueden editar.",
+            "metadatos": {}
+        },
+        {
+            "id_respuesta": "comment_2",
+            "tipo_contenido": "comentario",
+            "texto_input": "2 050 324 artículos en español.",
+            "metadatos": {}
+        },
+        {
+            "id_respuesta": "comment_3",
+            "tipo_contenido": "comentario",
+            "texto_input": "I'm Breathless (subtitulado Music from and Inspired by the Film Dick Tracy) es la segunda banda sonora de la cantante estadounidense Madonna, concebida como un álbum complementario y paralelo a la película Dick Tracy (1990), producida, dirigida y protagonizada por Warren Beatty en el papel principal. Madonna interpretó a la villana Breathless Mahoney, una cantante de cabaré que se enamora de Tracy. I'm Breathless fue compuesto con la consigna de que las canciones sonaran contemporáneas, pero en sintonía con la música de los años 1930, época en la que se ambienta la película. Stephen Sondheim creó tres temas que se incluyeron en el disco: «Sooner or Later», «More» y «What Can You Lose». Para Madonna, escribir y producir piezas nuevas representó un verdadero reto, pues debían tener una conexión auténtica con Dick Tracy, tanto en las letras como en la música. Para lograr este propósito, recurrió a su colaborador habitual Patrick Leonard, con quien compuso y produjo canciones que evocan la época del filme. La artista también trabajó con el DJ Shep Pettibone en el desarrollo de «Vogue», que originalmente no se tenía pensado incluirla en el disco. Las sesiones de grabación de I'm Breathless tuvieron lugar en los estudios Johnny Yuma Recording y Ocean Way, en Los Ángeles.",
+            "metadatos": {}
+        },
+        {
+            "id_respuesta": "comment_4",
+            "tipo_contenido": "comentario",
+            "texto_input": "I'm Breathless representó un cambio notable en la dirección musical de Madonna, ya que se alejó del sonido dance pop habitual de sus trabajos anteriores. En este sentido, el álbum se adentra en el terreno de los espectáculos y musicales de Broadway, y pertenece a los géneros jazz, swing y pop. La inspiración provino de las bandas de Tin Pan Alley, propia de los años treinta, y gran parte de los arreglos recurren al estilo de las big bands y las orquestas de estudio de los antiguos musicales. Madonna desarrolló un estilo de canto teatral completamente nuevo, al que inicialmente no estaba acostumbrada, y en las canciones emplea un registro más bajo y profundo. Considerado un álbum conceptual, aborda temáticas como el dinero y el sexo, así como el poder, el deseo y la ambigüedad moral. El título del disco juega con las palabras y alude al nombre del personaje, rindiéndole homenaje al mismo tiempo. La portada, capturada por el fotógrafo de moda francés Patrick Demarchelier, muestra a Madonna y Beatty caracterizados como Breathless Mahoney y Dick Tracy, respectivamente.",
+            "metadatos": {}
+        },
+        {
+            "id_respuesta": "comment_5",
+            "tipo_contenido": "comentario",
+            "texto_input": "La gota es una enfermedad producida por una acumulación de cristales de urato monosódico (sal derivada del ácido úrico) en distintas partes del cuerpo, sobre todo en las articulaciones, tejidos blandos y riñones. El ataque agudo de gota típico, denominado podagra, suele comenzar por la noche y consiste en una artritis que causa intenso dolor y enrojecimiento en la articulación metatarsofalángica del dedo gordo del pie. La gota es uno de los tipos de artritis por microcristales.",
+            "metadatos": {}
+        }
+    ]
+}
