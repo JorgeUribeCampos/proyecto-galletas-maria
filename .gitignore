@@ -1,1 +1,4 @@
-venv/
+ venv/
+recolector/.env
+recolector/conversacion_*.json
+recolector/chromedriver
