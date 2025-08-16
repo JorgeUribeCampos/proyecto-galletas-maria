@@ -1,0 +1,680 @@
+{
+  "master": {
+    "tasks": [
+      {
+        "id": 11,
+        "title": "Configurar Entorno de Google Cloud y BigQuery",
+        "description": "Crear y configurar el proyecto en Google Cloud. Habilitar las APIs necesarias (Cloud Functions, BigQuery) y crear las dos tablas de BigQuery: una para datos crudos ('raw_data') y otra para resultados analizados ('analyzed_results'), definiendo sus esquemas para soportar datos anidados JSON.",
+        "details": "El esquema de la tabla 'raw_data' debe poder almacenar el JSON completo de la conversación. El esquema de 'analyzed_results' debe almacenar la conversación junto con su análisis JSON anidado.",
+        "testStrategy": "Verificar que ambas tablas existen en BigQuery y que sus esquemas son correctos mediante la consola de Google Cloud. Confirmar que las credenciales de servicio tienen los permisos necesarios.",
+        "priority": "high",
+        "dependencies": [],
+        "status": "pending",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Crear y Configurar el Proyecto en Google Cloud",
+            "description": "Crear un nuevo proyecto en la consola de Google Cloud o seleccionar uno existente. Asegurarse de que la facturación esté habilitada para el proyecto.",
+            "dependencies": [],
+            "details": "El proyecto debe tener un ID único y un nombre descriptivo (ej. 'analisis-cultural-conversaciones'). Este será el contenedor para todos los recursos de GCP.",
+            "status": "pending",
+            "testStrategy": "Verificar que el proyecto está visible en la lista de proyectos de la consola de Google Cloud y que la cuenta de facturación asociada está activa."
+          },
+          {
+            "id": 2,
+            "title": "Habilitar APIs de BigQuery y Cloud Functions",
+            "description": "Navegar a la sección 'APIs y servicios' y habilitar las APIs necesarias para el proyecto: 'BigQuery API' y 'Cloud Functions API'.",
+            "dependencies": [
+              "11.1"
+            ],
+            "details": "Es probable que también se necesite habilitar la 'Cloud Build API', ya que es una dependencia para el despliegue de Cloud Functions. Habilitar las tres para evitar problemas futuros.",
+            "status": "pending",
+            "testStrategy": "Confirmar en el panel de 'APIs y servicios habilitados' que las APIs de BigQuery, Cloud Functions y Cloud Build aparecen con el estado 'Habilitado'."
+          },
+          {
+            "id": 3,
+            "title": "Crear el Dataset de BigQuery",
+            "description": "Dentro del servicio de BigQuery, crear un nuevo dataset que servirá como contenedor para las tablas del proyecto.",
+            "dependencies": [
+              "11.2"
+            ],
+            "details": "Asignar un nombre al dataset (ej. 'conversation_analytics') y seleccionar la ubicación de los datos (ej. 'US' o 'EU') según los requisitos de residencia de datos.",
+            "status": "pending",
+            "testStrategy": "Verificar que el nuevo dataset aparece listado bajo el proyecto correcto en el explorador de BigQuery."
+          },
+          {
+            "id": 4,
+            "title": "Crear Tabla 'raw_data' para Datos Crudos",
+            "description": "Dentro del dataset creado, definir y crear la tabla 'raw_data' con un esquema capaz de almacenar el JSON completo de una conversación.",
+            "dependencies": [
+              "11.3"
+            ],
+            "details": "El esquema debe contener al menos dos campos: un identificador único (ej. 'conversation_id' de tipo STRING) y un campo para los datos crudos (ej. 'raw_json' de tipo JSON o STRING).",
+            "status": "pending",
+            "testStrategy": "Inspeccionar el esquema de la tabla 'raw_data' en la consola de BigQuery para confirmar que los campos y sus tipos de datos son correctos."
+          },
+          {
+            "id": 5,
+            "title": "Crear Tabla 'analyzed_results' para Resultados",
+            "description": "Crear la tabla 'analyzed_results' con un esquema que almacene la conversación original junto con su análisis JSON anidado.",
+            "dependencies": [
+              "11.3"
+            ],
+            "details": "El esquema debe incluir campos como 'conversation_id' (STRING), 'raw_conversation' (JSON/STRING), y un campo 'analysis_results' de tipo RECORD/STRUCT para el JSON anidado del análisis (que contendrá sentimiento, variables culturales, etc.).",
+            "status": "pending",
+            "testStrategy": "Revisar el esquema de la tabla 'analyzed_results' en la consola de BigQuery para verificar que la estructura anidada (RECORD/STRUCT) está definida correctamente."
+          }
+        ]
+      },
+      {
+        "id": 12,
+        "title": "Desarrollar el Recolector de Datos (Scraper)",
+        "description": "Crear un script de Python utilizando Selenium que pueda leer una lista de URLs desde un archivo `urls.txt`. El script debe ser capaz de iniciar sesión en Instagram para acceder a los contenidos.",
+        "details": "Implementar el manejo de credenciales de Instagram de forma segura (p. ej., variables de entorno). El script debe incluir la lógica para instanciar y controlar el navegador web.",
+        "testStrategy": "Ejecutar el script y verificar que abre el navegador, navega a la página de inicio de sesión de Instagram y realiza el login con éxito.",
+        "priority": "high",
+        "dependencies": [],
+        "status": "pending",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Configuración del Entorno y Manejo de Credenciales",
+            "description": "Preparar el entorno de desarrollo, instalar las librerías necesarias (Selenium, python-dotenv) y configurar las variables de entorno para almacenar de forma segura las credenciales de Instagram (usuario y contraseña).",
+            "dependencies": [],
+            "details": "Crear un archivo `requirements.txt` con las dependencias y un archivo `.env` para las credenciales. El script debe cargar estas variables al inicio.",
+            "status": "pending",
+            "testStrategy": "Verificar que las variables de entorno se pueden leer correctamente desde el script de Python sin exponerlas en el código."
+          },
+          {
+            "id": 2,
+            "title": "Inicialización y Configuración del WebDriver de Selenium",
+            "description": "Implementar la lógica para instanciar y controlar el controlador del navegador web (WebDriver) utilizando Selenium. Esto incluye configurar las opciones del navegador y manejar su ciclo de vida (inicio y cierre).",
+            "dependencies": [
+              "12.1"
+            ],
+            "details": "Crear una función o clase que encapsule la creación del `WebDriver` (p. ej., `ChromeDriver`). Considerar opciones como el modo `headless` o la configuración de un `user-agent` específico.",
+            "status": "pending",
+            "testStrategy": "Ejecutar el script y confirmar que una ventana del navegador se abre y se cierra correctamente sin errores."
+          },
+          {
+            "id": 3,
+            "title": "Implementación de la Lógica de Inicio de Sesión en Instagram",
+            "description": "Desarrollar la secuencia de pasos para que el script navegue a la página de inicio de sesión de Instagram, localice los campos de usuario y contraseña, ingrese las credenciales leídas del entorno y envíe el formulario.",
+            "dependencies": [
+              "12.1",
+              "12.2"
+            ],
+            "details": "Utilizar esperas explícitas (`WebDriverWait`) para manejar la carga de elementos de la página de forma robusta. Identificar los selectores (XPath, CSS) para los campos de entrada y el botón de inicio de sesión.",
+            "status": "pending",
+            "testStrategy": "Ejecutar el script y verificar que el inicio de sesión se completa con éxito y se redirige a la página principal de Instagram."
+          },
+          {
+            "id": 4,
+            "title": "Lectura de URLs desde Archivo de Texto",
+            "description": "Crear la funcionalidad para leer una lista de URLs de perfiles o publicaciones de Instagram desde un archivo de texto llamado `urls.txt`.",
+            "dependencies": [],
+            "details": "Implementar una función que abra `urls.txt`, lea su contenido línea por línea y devuelva una lista de URLs. Incluir manejo de errores para el caso de que el archivo no exista.",
+            "status": "pending",
+            "testStrategy": "Crear un archivo `urls.txt` de prueba y ejecutar una parte del script para verificar mediante impresiones en consola que las URLs se leen correctamente."
+          },
+          {
+            "id": 5,
+            "title": "Integración y Flujo Principal de Navegación",
+            "description": "Integrar todos los componentes anteriores en un script principal. El script debe orquestar el flujo completo: inicializar el navegador, iniciar sesión, leer las URLs y luego navegar a cada una de ellas.",
+            "dependencies": [
+              "12.3",
+              "12.4"
+            ],
+            "details": "Estructurar el script con una función principal o un bloque `if __name__ == '__main__':`. El bucle de navegación a las URLs debe incluir pausas (`time.sleep`) para simular un comportamiento humano y evitar bloqueos.",
+            "status": "pending",
+            "testStrategy": "Ejecutar el script completo y verificar en los logs o en la ventana del navegador que, después de iniciar sesión, el script navega secuencialmente a cada una de las URLs especificadas en `urls.txt`."
+          }
+        ]
+      },
+      {
+        "id": 13,
+        "title": "Implementar Lógica de Extracción y Guardado del Scraper",
+        "description": "Extender el scraper para que, una vez en una URL de post, extraiga el texto del post principal y los textos de todos los comentarios. Cada conversación completa (post + comentarios) debe guardarse como un archivo JSON individual.",
+        "details": "El formato de salida JSON debe seguir un esquema predefinido y consistente para facilitar el procesamiento posterior. Incluir manejo de errores para posts que no se puedan cargar.",
+        "testStrategy": "Procesar una URL de prueba y verificar que el archivo JSON generado contiene el texto del post y todos los comentarios correctamente extraídos.",
+        "priority": "high",
+        "dependencies": [
+          12
+        ],
+        "status": "pending",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Definir el Esquema JSON y la Convención de Nomenclatura de Archivos",
+            "description": "Establecer la estructura exacta del archivo JSON de salida. Este esquema debe incluir campos para la URL del post, el texto del post principal y una lista de los textos de los comentarios. Definir también una convención de nomenclatura única para los archivos generados (p. ej., 'post_<id_del_post>.json').",
+            "dependencies": [],
+            "details": "El objetivo es crear una plantilla de datos consistente. El esquema podría ser: { \"post_url\": \"...\", \"post_text\": \"...\", \"comments\": [\"comentario 1\", \"comentario 2\", ...] }. Documentar esta decisión para que el equipo la utilice.",
+            "status": "pending",
+            "testStrategy": "Revisar el documento de definición del esquema para asegurar que cumple con los requisitos de procesamiento posterior."
+          },
+          {
+            "id": 2,
+            "title": "Implementar la Lógica de Extracción del Texto del Post Principal",
+            "description": "Desarrollar la función dentro del scraper que, dada una URL de un post de Instagram, localiza el elemento HTML que contiene el texto o la descripción principal del post y extrae su contenido.",
+            "dependencies": [],
+            "details": "Utilizar selectores CSS o XPath robustos para identificar el contenedor del texto del post. La función debe recibir el driver de Selenium y devolver el texto extraído como una cadena de texto.",
+            "status": "pending",
+            "testStrategy": "Probar la función con varias URLs de posts públicos y verificar que extrae correctamente la descripción completa."
+          },
+          {
+            "id": 3,
+            "title": "Implementar la Lógica de Extracción de Todos los Comentarios",
+            "description": "Crear la funcionalidad para localizar la sección de comentarios y extraer el texto de cada uno. El script debe ser capaz de manejar la carga dinámica de comentarios, como hacer scroll o hacer clic en botones de 'cargar más comentarios' hasta que todos sean visibles y se hayan extraído.",
+            "dependencies": [],
+            "details": "Implementar un bucle que interactúe con la página para cargar todos los comentarios antes de la extracción. Se debe tener cuidado con los elementos que se vuelven obsoletos (StaleElementReferenceException) durante la carga.",
+            "status": "pending",
+            "testStrategy": "Ejecutar el script en un post con un número significativo de comentarios y verificar que la cantidad de comentarios extraídos coincide con la cantidad real."
+          },
+          {
+            "id": 4,
+            "title": "Integrar la Extracción y el Guardado en Formato JSON",
+            "description": "Combinar los datos extraídos (texto del post y lista de comentarios) en una estructura de diccionario que coincida con el esquema definido en la subtarea 1. Luego, serializar este diccionario a un archivo JSON, utilizando la convención de nomenclatura establecida.",
+            "dependencies": [
+              "13.1",
+              "13.2",
+              "13.3"
+            ],
+            "details": "Crear una función principal que orqueste la llamada a las funciones de extracción de post y comentarios. Usar la librería `json` de Python para escribir el archivo. El nombre del archivo debe generarse dinámicamente a partir de la URL o un ID único del post.",
+            "status": "pending",
+            "testStrategy": "Procesar una URL de prueba y verificar que el archivo JSON generado es válido, sigue el esquema definido y contiene los datos correctos."
+          },
+          {
+            "id": 5,
+            "title": "Implementar Manejo de Errores para URLs de Posts",
+            "description": "Añadir bloques try-except alrededor de la lógica de procesamiento de cada URL para gestionar errores comunes, como posts no encontrados (error 404), cuentas privadas o fallos al cargar la página. El scraper no debe detenerse, sino registrar el error y continuar con la siguiente URL.",
+            "dependencies": [
+              "13.4"
+            ],
+            "details": "Capturar excepciones específicas de Selenium como `NoSuchElementException` o `TimeoutException`. Implementar un sistema de logging para registrar qué URLs fallaron y por qué, facilitando la depuración.",
+            "status": "pending",
+            "testStrategy": "Probar el scraper con una lista de URLs que incluya una URL inválida o de un post eliminado y verificar que el script registra el error y finaliza el procesamiento de las URLs válidas sin fallar."
+          }
+        ]
+      },
+      {
+        "id": 14,
+        "title": "Desarrollar el Núcleo de Análisis (Cloud Function)",
+        "description": "Crear una Google Cloud Function en Python que reciba un fragmento de texto. La función debe utilizar la librería `pysentimiento` para el análisis de sentimiento y una lógica basada en palabras clave para identificar variables culturales predefinidas.",
+        "details": "La lista de palabras clave para las variables culturales (nostalgia, culpa, etc.) debe ser configurable. La función debe devolver un objeto JSON con el sentimiento y las variables culturales detectadas.",
+        "testStrategy": "Desplegar la función y probarla con diferentes textos de entrada para verificar que devuelve el análisis de sentimiento y las variables culturales esperadas en formato JSON.",
+        "priority": "high",
+        "dependencies": [],
+        "status": "pending",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Configuración Inicial del Proyecto y Dependencias de la Cloud Function",
+            "description": "Crear la estructura de archivos base para la Google Cloud Function, incluyendo `main.py` y `requirements.txt`. Definir la función principal que manejará las peticiones HTTP y extraerá el texto de entrada del cuerpo de la solicitud.",
+            "dependencies": [],
+            "details": "El archivo `requirements.txt` debe especificar las librerías necesarias, como `pysentimiento` y `google-cloud-functions`. La función en `main.py` debe estar preparada para recibir un request JSON con un campo de texto (ej: `{\"text\": \"...\"}`).",
+            "status": "pending",
+            "testStrategy": "Desplegar una versión inicial de la función que simplemente devuelva el texto recibido para confirmar que la estructura del proyecto, el despliegue y la recepción de datos funcionan correctamente."
+          },
+          {
+            "id": 2,
+            "title": "Implementación del Análisis de Sentimiento con `pysentimiento`",
+            "description": "Integrar la librería `pysentimiento` dentro de la función para analizar el sentimiento del fragmento de texto recibido. El resultado del análisis debe ser almacenado temporalmente.",
+            "dependencies": [
+              "14.1"
+            ],
+            "details": "Instanciar el analizador de sentimiento de `pysentimiento`. Procesar el texto de entrada con el analizador y extraer el resultado principal (p. ej., POS, NEG, NEU) y las probabilidades asociadas.",
+            "status": "pending",
+            "testStrategy": "Probar la función de forma local o con pruebas unitarias, pasando textos con sentimientos claros (positivo, negativo, neutro) para verificar que el módulo de sentimiento devuelve los resultados esperados."
+          },
+          {
+            "id": 3,
+            "title": "Desarrollo de la Lógica de Detección de Variables Culturales por Palabras Clave",
+            "description": "Implementar la función que busca y detecta la presencia de variables culturales (nostalgia, culpa, etc.) en el texto, basándose en una lista de palabras clave.",
+            "dependencies": [
+              "14.1"
+            ],
+            "details": "Crear una función que reciba el texto y un diccionario de palabras clave (ej: `{'nostalgia': ['recuerdo', 'añoro'], 'culpa': ['perdón', 'error']}`). La función debe devolver una lista con los nombres de las variables culturales encontradas. La búsqueda no debe ser sensible a mayúsculas/minúsculas.",
+            "status": "pending",
+            "testStrategy": "Crear pruebas unitarias específicas para esta lógica, usando textos de ejemplo que contengan y no contengan las palabras clave para asegurar que la detección es precisa."
+          },
+          {
+            "id": 4,
+            "title": "Implementación del Mecanismo de Configuración para Palabras Clave",
+            "description": "Hacer que la lista de palabras clave para las variables culturales sea configurable externamente, en lugar de estar fija en el código.",
+            "dependencies": [
+              "14.3"
+            ],
+            "details": "Implementar la carga de las palabras clave desde un archivo de configuración (p. ej., `config.json`) que se despliegue junto a la función. La lógica de detección desarrollada en la subtarea anterior debe ser modificada para leer y utilizar esta configuración.",
+            "status": "pending",
+            "testStrategy": "Probar que la función carga correctamente el archivo de configuración al iniciarse. Modificar el archivo de configuración y volver a probar para verificar que la detección de variables cambia sin necesidad de alterar el código Python."
+          },
+          {
+            "id": 5,
+            "title": "Integración Final, Formateo de Salida JSON y Despliegue",
+            "description": "Unificar los resultados del análisis de sentimiento y de la detección de variables culturales en un único objeto JSON de respuesta, y preparar la función para su despliegue final.",
+            "dependencies": [
+              "14.2",
+              "14.4"
+            ],
+            "details": "En la función principal, invocar a los módulos de sentimiento y de variables culturales. Combinar sus salidas en la estructura JSON final requerida: `{\"sentimiento\": {...}, \"variables_culturales\": [...]}`. Asegurarse de que la función maneja correctamente los errores y devuelve una respuesta HTTP adecuada.",
+            "status": "pending",
+            "testStrategy": "Realizar pruebas de integración de extremo a extremo. Enviar peticiones con diferentes textos a la función desplegada en Google Cloud y validar que el objeto JSON de respuesta contiene la estructura y los datos correctos para ambos análisis."
+          }
+        ]
+      },
+      {
+        "id": 15,
+        "title": "Desarrollar el Orquestador de Conversaciones (Cloud Function)",
+        "description": "Crear una segunda Google Cloud Function que reciba una conversación completa en formato JSON (post + comentarios). Esta función debe invocar al 'Núcleo de Análisis' para el post y para cada comentario individualmente.",
+        "details": "La función debe ensamblar todos los análisis individuales en un único objeto JSON de resultado que mantenga la estructura de la conversación original pero enriquecida con los datos del análisis.",
+        "testStrategy": "Probar la función con un JSON de conversación de ejemplo y verificar que llama correctamente a la función de análisis y que el JSON de salida ensamblado es correcto.",
+        "priority": "medium",
+        "dependencies": [
+          14
+        ],
+        "status": "pending",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Definir la estructura base de la Cloud Function y el manejo de la solicitud",
+            "description": "Crear el archivo principal de Python para la Cloud Function, definir el punto de entrada (handler) y la lógica para recibir y validar la solicitud HTTP con el JSON de la conversación.",
+            "dependencies": [],
+            "details": "La función debe ser de tipo HTTP-triggered. Implementar la lectura del cuerpo de la solicitud (request body) y el parseo del JSON a un objeto Python. Incluir manejo de errores básicos para JSON malformado o solicitudes sin cuerpo.",
+            "status": "pending",
+            "testStrategy": "Probar invocando la función con un JSON de ejemplo y verificar que lo parsea correctamente sin errores."
+          },
+          {
+            "id": 2,
+            "title": "Implementar la invocación al 'Núcleo de Análisis' para el post principal",
+            "description": "Añadir la lógica para realizar una llamada HTTP autenticada a la Cloud Function 'Núcleo de Análisis' (Task 14), enviando únicamente el texto del post principal.",
+            "dependencies": [
+              "15.1"
+            ],
+            "details": "Utilizar la librería `requests` y `google-auth` para obtener un token de identidad y realizar la llamada autenticada. La URL de la función 'Núcleo de Análisis' debe ser configurable mediante una variable de entorno.",
+            "status": "pending",
+            "testStrategy": "Verificar que la función puede invocar exitosamente al 'Núcleo de Análisis' y recibir una respuesta de análisis para el texto del post."
+          },
+          {
+            "id": 3,
+            "title": "Iterar sobre los comentarios e invocar el 'Núcleo de Análisis' para cada uno",
+            "description": "Implementar un bucle que recorra la lista de comentarios del JSON de entrada. Dentro del bucle, invocar la función 'Núcleo de Análisis' para el texto de cada comentario.",
+            "dependencies": [
+              "15.2"
+            ],
+            "details": "Reutilizar la lógica de invocación del subtask anterior. Almacenar temporalmente el resultado del análisis junto con el comentario original al que corresponde para su posterior ensamblaje.",
+            "status": "pending",
+            "testStrategy": "Usar un JSON de prueba con múltiples comentarios y verificar mediante logs que se invoca al 'Núcleo de Análisis' una vez por cada comentario."
+          },
+          {
+            "id": 4,
+            "title": "Ensamblar el objeto JSON de resultado final enriquecido",
+            "description": "Construir el objeto JSON de respuesta final. Este debe mantener la estructura original de la conversación (post y comentarios) pero añadiendo los resultados del análisis a cada elemento.",
+            "dependencies": [
+              "15.3"
+            ],
+            "details": "Crear una copia de la estructura de datos de entrada. Añadir una nueva clave, por ejemplo `\"analysis\"`, al objeto del post y a cada objeto de comentario, asignando el resultado del análisis correspondiente obtenido en los pasos anteriores.",
+            "status": "pending",
+            "testStrategy": "Verificar que el JSON de salida contiene la misma estructura que el de entrada, pero con el campo `\"analysis\"` añadido tanto en el post como en cada uno de los comentarios."
+          },
+          {
+            "id": 5,
+            "title": "Configurar dependencias, desplegar y probar la función de forma integral",
+            "description": "Crear el archivo `requirements.txt` con las librerías necesarias, desplegar la función en Google Cloud y realizar una prueba completa con un JSON de conversación de ejemplo.",
+            "dependencies": [
+              "15.4"
+            ],
+            "details": "El `requirements.txt` debe incluir `google-cloud-functions`, `requests` y `google-auth`. El despliegue se realizará con el comando `gcloud functions deploy`, especificando el trigger, el runtime y las variables de entorno necesarias.",
+            "status": "pending",
+            "testStrategy": "Invocar la URL de la función desplegada con un JSON de prueba completo y validar que la respuesta JSON es la esperada, con toda la conversación enriquecida."
+          }
+        ]
+      },
+      {
+        "id": 16,
+        "title": "Crear Script Maestro para Cargar Datos a BigQuery",
+        "description": "Desarrollar un script de utilidad en Python que lea los archivos JSON generados por el scraper y los cargue en la tabla 'raw_data' de BigQuery. Este script servirá para la ingesta inicial de datos.",
+        "details": "El script debe manejar la carga de múltiples archivos JSON en un solo lote para mayor eficiencia. Utilizar la librería de cliente de Google Cloud para Python.",
+        "testStrategy": "Ejecutar el script con los JSON de prueba y verificar que los registros correspondientes aparecen correctamente en la tabla 'raw_data' de BigQuery.",
+        "priority": "medium",
+        "dependencies": [
+          11,
+          13
+        ],
+        "status": "pending",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Configurar el Entorno y la Autenticación con Google Cloud",
+            "description": "Instalar la librería 'google-cloud-bigquery' y configurar las credenciales de autenticación (ej. Service Account) para permitir que el script interactúe de forma segura con la API de BigQuery.",
+            "dependencies": [],
+            "details": "Asegurar que las credenciales estén disponibles para el script, ya sea a través de una variable de entorno (GOOGLE_APPLICATION_CREDENTIALS) o cargándolas explícitamente en el código. Crear una instancia del cliente de BigQuery.",
+            "status": "pending",
+            "testStrategy": "Ejecutar un comando simple con el cliente de BigQuery, como listar los datasets del proyecto, para verificar que la conexión y autenticación son exitosas."
+          },
+          {
+            "id": 2,
+            "title": "Implementar la Lógica para Descubrir y Leer Archivos JSON",
+            "description": "Desarrollar una función que reciba la ruta a un directorio, lo escanee en busca de todos los archivos con extensión '.json' y lea su contenido.",
+            "dependencies": [],
+            "details": "La función debe ser capaz de manejar múltiples archivos y consolidar los datos de todos ellos en una única lista de diccionarios Python en memoria, lista para ser procesada.",
+            "status": "pending",
+            "testStrategy": "Crear un directorio de prueba con varios archivos JSON y algunos archivos de otro tipo. Verificar que la función lee y carga correctamente solo el contenido de los archivos JSON."
+          },
+          {
+            "id": 3,
+            "title": "Preparar los Datos para la Carga en Lote",
+            "description": "Tomar la lista de registros leídos de los archivos JSON y asegurarse de que su estructura y tipos de datos son consistentes y compatibles con el esquema de la tabla 'raw_data' en BigQuery.",
+            "dependencies": [
+              "16.2"
+            ],
+            "details": "Aunque la tabla 'raw_data' puede ser flexible (ej. con un campo JSON), este paso es crucial para validar que cada objeto a cargar es un JSON válido y para realizar cualquier limpieza o ajuste menor si fuera necesario.",
+            "status": "pending",
+            "testStrategy": "Inspeccionar la estructura de datos en memoria después de este paso para confirmar que es una lista de diccionarios válida y lista para la inserción."
+          },
+          {
+            "id": 4,
+            "title": "Implementar la Función de Carga por Lotes a BigQuery",
+            "description": "Crear la función principal que utiliza el cliente de BigQuery para cargar la lista de registros preparada en la tabla 'raw_data' en una sola operación de lote.",
+            "dependencies": [
+              "16.1",
+              "16.3"
+            ],
+            "details": "Utilizar el método `client.load_table_from_json()` con los datos en memoria para una carga eficiente. Configurar el `job_config` para especificar que los datos deben añadirse a la tabla (write_disposition='WRITE_APPEND'). Incluir manejo de errores para la llamada a la API.",
+            "status": "pending",
+            "testStrategy": "Ejecutar la función con un conjunto de datos de prueba y verificar en la consola de BigQuery que los registros se han insertado correctamente en la tabla 'raw_data'."
+          },
+          {
+            "id": 5,
+            "title": "Estructurar el Script Final con Argumentos y Logging",
+            "description": "Ensamblar todas las funciones anteriores en un script ejecutable. Incorporar argumentos de línea de comandos (usando `argparse`) para especificar el directorio de entrada y los detalles de la tabla de BigQuery.",
+            "dependencies": [
+              "16.4"
+            ],
+            "details": "Añadir logging para informar sobre el progreso del script: cuántos archivos se encontraron, cuántos registros se van a cargar y el resultado de la operación de carga (éxito o error). Esto hace que el script sea robusto y fácil de usar.",
+            "status": "pending",
+            "testStrategy": "Ejecutar el script completo desde la terminal, pasando los argumentos necesarios. Revisar los logs para confirmar el flujo correcto y verificar el resultado final en BigQuery."
+          }
+        ]
+      },
+      {
+        "id": 17,
+        "title": "Desarrollar el Script Maestro de Ejecución (Lectura y Orquestación)",
+        "description": "Crear el script principal de Python que se ejecuta localmente. Este script debe conectarse a BigQuery, leer las conversaciones de la tabla 'raw_data' y llamar al 'Orquestador de Conversaciones' para cada una.",
+        "details": "Implementar un mecanismo para procesar solo las conversaciones que no han sido analizadas previamente, por ejemplo, consultando la tabla de resultados.",
+        "testStrategy": "Ejecutar el script y verificar mediante logs que lee los datos de BigQuery y que invoca con éxito a la Cloud Function del orquestador.",
+        "priority": "medium",
+        "dependencies": [
+          15,
+          16
+        ],
+        "status": "pending",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Configurar el Entorno y la Autenticación con Google Cloud",
+            "description": "Establecer la estructura básica del script de Python, incluyendo la gestión de configuraciones (nombres de tablas, proyecto) y la implementación del mecanismo de autenticación para interactuar con los servicios de Google Cloud, específicamente BigQuery.",
+            "dependencies": [],
+            "details": "Utilizar un archivo de configuración (p. ej., YAML o .env) para gestionar los parámetros del proyecto. Implementar la autenticación usando la librería `google-auth` y las credenciales de la cuenta de servicio o las credenciales de usuario predeterminadas (ADC).",
+            "status": "pending",
+            "testStrategy": "Ejecutar una consulta de prueba simple (ej. `SELECT 1`) a BigQuery desde el script para confirmar que la conexión y autenticación son exitosas."
+          },
+          {
+            "id": 2,
+            "title": "Implementar la Consulta para Identificar Conversaciones Pendientes",
+            "description": "Desarrollar la función que consulta BigQuery para obtener los IDs de las conversaciones ya procesadas (desde la tabla de resultados) y luego consulta la tabla 'raw_data' para seleccionar únicamente aquellas conversaciones que aún no han sido analizadas.",
+            "dependencies": [
+              "17.1"
+            ],
+            "details": "Construir una consulta SQL que utilice un `LEFT JOIN` o `NOT IN` para comparar los IDs de la tabla `raw_data` con los de la tabla de resultados y así filtrar las conversaciones pendientes de forma eficiente.",
+            "status": "pending",
+            "testStrategy": "Poblar las tablas de BigQuery con datos de prueba (crudos y resultados parciales) y verificar que la función devuelve solo los IDs de las conversaciones no procesadas."
+          },
+          {
+            "id": 3,
+            "title": "Desarrollar la Función para Leer los Datos Completos de las Conversaciones",
+            "description": "Crear una función que, a partir de la lista de IDs de conversaciones pendientes, recupere los datos completos de cada conversación (post y comentarios) desde la tabla 'raw_data' de BigQuery.",
+            "dependencies": [
+              "17.2"
+            ],
+            "details": "La función debe iterar sobre los IDs de las conversaciones pendientes y ejecutar una consulta a BigQuery para obtener el JSON completo de cada una. Debe manejar la deserialización del JSON si está almacenado como string.",
+            "status": "pending",
+            "testStrategy": "Probar la función con una lista de IDs de prueba conocidos y verificar que los datos de la conversación recuperados de BigQuery son correctos y completos en formato de objeto Python."
+          },
+          {
+            "id": 4,
+            "title": "Implementar la Invocación al 'Orquestador de Conversaciones'",
+            "description": "Crear la lógica para iterar sobre cada conversación recuperada y realizar una llamada HTTP POST a la URL del 'Orquestador de Conversaciones' (Cloud Function), enviando los datos de la conversación en formato JSON.",
+            "dependencies": [
+              "17.3"
+            ],
+            "details": "Utilizar la librería `requests`. Implementar el manejo de la autenticación para invocar la Cloud Function (p. ej., obteniendo un token de identidad de Google). Incluir manejo de errores para llamadas fallidas y reintentos si es necesario.",
+            "status": "pending",
+            "testStrategy": "Utilizar una URL de un mock service para simular la Cloud Function. Verificar que el script envía la solicitud POST con el formato JSON y las cabeceras de autenticación correctas."
+          },
+          {
+            "id": 5,
+            "title": "Estructurar el Bucle Principal de Ejecución y Añadir Logging",
+            "description": "Ensamblar todas las funciones anteriores en un bucle de ejecución principal. Implementar un sistema de logging robusto para registrar el inicio y fin del proceso, las conversaciones que se están procesando, las llamadas exitosas al orquestador y cualquier error.",
+            "dependencies": [
+              "17.1",
+              "17.2",
+              "17.3",
+              "17.4"
+            ],
+            "details": "Crear una función `main()` que orqueste la llamada a las funciones de identificación, lectura e invocación. Usar el módulo `logging` de Python para imprimir mensajes informativos y de error a la consola o a un archivo.",
+            "status": "pending",
+            "testStrategy": "Ejecutar el script completo en un entorno de prueba. Revisar los logs para confirmar que el flujo es correcto: identifica conversaciones, las lee, las envía al orquestador (o mock) y registra cada paso adecuadamente."
+          }
+        ]
+      },
+      {
+        "id": 18,
+        "title": "Implementar Guardado de Resultados en el Script Maestro",
+        "description": "Finalizar el script maestro añadiendo la lógica para tomar los resultados analizados devueltos por el orquestador y guardarlos en la tabla 'analyzed_results' de BigQuery.",
+        "details": "Asegurarse de que el formato de los datos que se insertan coincide exactamente con el esquema de la tabla 'analyzed_results'.",
+        "testStrategy": "Ejecutar el script completo y verificar que los nuevos registros con los datos analizados aparecen en la tabla 'analyzed_results' de BigQuery.",
+        "priority": "medium",
+        "dependencies": [
+          17
+        ],
+        "status": "pending",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Configurar Cliente de BigQuery y Referencia a la Tabla",
+            "description": "Inicializar el cliente de BigQuery en el script maestro, gestionando la autenticación necesaria. Crear una referencia explícita a la tabla 'analyzed_results' en el proyecto y dataset correspondientes.",
+            "dependencies": [],
+            "details": "Utilizar la librería 'google-cloud-bigquery'. El cliente debe ser instanciado y configurado para usar las credenciales adecuadas (ej. a través de una cuenta de servicio). Almacenar los identificadores de proyecto, dataset y tabla en variables de configuración para facilitar su mantenimiento.",
+            "status": "pending",
+            "testStrategy": "Verificar que el cliente puede conectarse y obtener los metadatos de la tabla 'analyzed_results' sin errores."
+          },
+          {
+            "id": 2,
+            "title": "Desarrollar Función de Transformación de Datos al Esquema de BigQuery",
+            "description": "Crear una función que reciba los resultados del orquestador y los transforme en una lista de diccionarios que coincida exactamente con el esquema de la tabla 'analyzed_results'.",
+            "dependencies": [
+              "18.1"
+            ],
+            "details": "Esta función debe mapear los nombres de los campos, convertir tipos de datos (ej. strings a Timestamps de BigQuery), y asegurar que todos los campos requeridos por la tabla estén presentes y no nulos si así se exige. Validar la estructura antes de proceder.",
+            "status": "pending",
+            "testStrategy": "Probar la función de forma aislada con datos de ejemplo del orquestador y comparar la salida con el esquema esperado de la tabla."
+          },
+          {
+            "id": 3,
+            "title": "Implementar la Lógica de Inserción de Filas en BigQuery",
+            "description": "Escribir el código que utiliza el cliente de BigQuery para insertar los datos ya transformados en la tabla 'analyzed_results'.",
+            "dependencies": [
+              "18.1",
+              "18.2"
+            ],
+            "details": "Utilizar el método 'insert_rows_json' del cliente de BigQuery, que es eficiente para inserciones en streaming. La función debe recibir la lista de filas pre-formateadas y la referencia a la tabla.",
+            "status": "pending",
+            "testStrategy": "Ejecutar esta función con un conjunto de datos de prueba válidos y verificar manualmente en la consola de BigQuery que las filas se han insertado correctamente."
+          },
+          {
+            "id": 4,
+            "title": "Añadir Manejo de Errores para la Operación de Guardado",
+            "description": "Envolver la llamada de inserción de BigQuery en un bloque try-except para capturar y gestionar posibles errores durante el proceso de guardado.",
+            "dependencies": [
+              "18.3"
+            ],
+            "details": "Gestionar errores comunes como fallos de conexión, problemas de permisos o, crucialmente, errores de discrepancia de esquema. Registrar los errores devueltos por la API de BigQuery de forma detallada para facilitar la depuración.",
+            "status": "pending",
+            "testStrategy": "Intentar insertar datos con un campo faltante o un tipo de dato incorrecto para asegurar que el error es capturado y registrado adecuadamente sin que el script se detenga abruptamente."
+          },
+          {
+            "id": 5,
+            "title": "Integrar y Validar el Flujo de Guardado en el Script Maestro",
+            "description": "Incorporar la nueva funcionalidad de guardado en el flujo de ejecución principal del script maestro, llamándola después de recibir la respuesta del orquestador.",
+            "dependencies": [
+              "18.4"
+            ],
+            "details": "Asegurarse de que los datos analizados se pasan correctamente a la función de transformación y luego a la de inserción. Añadir registros (logs) que indiquen el inicio, el éxito o el fallo de la operación de guardado en BigQuery.",
+            "status": "pending",
+            "testStrategy": "Ejecutar el script maestro completo en un entorno de prueba. Verificar que, tras el análisis, los resultados aparecen como nuevos registros en la tabla 'analyzed_results' de BigQuery, cumpliendo con el objetivo final de la tarea."
+          }
+        ]
+      },
+      {
+        "id": 19,
+        "title": "Definir Variables Culturales y Lógica de Keywords",
+        "description": "Investigar y definir el conjunto de variables culturales (nostalgia, culpa, tradición, etc.) y el diccionario de palabras clave asociado que se utilizará en el 'Núcleo de Análisis' para su detección.",
+        "details": "Este es un trabajo conceptual que debe ser validado con el equipo de análisis. El resultado será una estructura de datos (ej. un diccionario Python) que se integrará en la Cloud Function de análisis.",
+        "testStrategy": "Revisar la lista de keywords con el equipo y realizar pruebas manuales sobre textos de ejemplo para validar su efectividad.",
+        "priority": "high",
+        "dependencies": [
+          14
+        ],
+        "status": "pending",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Investigar y Proponer Lista Preliminar de Variables Culturales",
+            "description": "Realizar una investigación de mercado y académica para identificar un conjunto amplio de posibles variables culturales (ej. nostalgia, culpa, tradición, innovación, etc.) relevantes para el contexto del proyecto.",
+            "dependencies": [],
+            "details": "Consultar estudios de sociología, marketing y análisis de tendencias. El resultado será un documento con una lista de 10-15 variables candidatas, cada una con una breve justificación.",
+            "status": "pending",
+            "testStrategy": "Presentar la lista preliminar al equipo de análisis para una primera ronda de feedback sobre la relevancia de las variables propuestas."
+          },
+          {
+            "id": 2,
+            "title": "Definir y Seleccionar el Conjunto Final de Variables",
+            "description": "A partir de la lista preliminar, colaborar con el equipo de análisis para seleccionar el conjunto definitivo de variables culturales que se medirán. Para cada variable seleccionada, redactar una definición clara y concisa.",
+            "dependencies": [
+              "19.1"
+            ],
+            "details": "Organizar una sesión de trabajo con el equipo de análisis. El entregable será un documento formal con el listado final de variables y sus definiciones operativas.",
+            "status": "pending",
+            "testStrategy": "Confirmar que el equipo de análisis aprueba formalmente el conjunto de variables y sus definiciones."
+          },
+          {
+            "id": 3,
+            "title": "Desarrollar el Diccionario de Palabras Clave para Cada Variable",
+            "description": "Para cada variable cultural definida, compilar una lista exhaustiva de palabras clave, frases, sinónimos y expresiones idiomáticas en español que sirvan como indicadores para su detección en texto.",
+            "dependencies": [
+              "19.2"
+            ],
+            "details": "Utilizar herramientas de análisis de sinónimos, foros y redes sociales para encontrar lenguaje natural asociado a cada variable. Se debe considerar el uso de lematización y raíces de palabras.",
+            "status": "pending",
+            "testStrategy": "Realizar una revisión cruzada de las listas de palabras clave entre dos miembros del equipo para asegurar la coherencia y amplitud."
+          },
+          {
+            "id": 4,
+            "title": "Estructurar las Variables y Keywords en un Diccionario de Datos",
+            "description": "Convertir el listado de variables y sus correspondientes palabras clave en una estructura de datos formal, como un diccionario de Python o un objeto JSON, para su fácil integración en el 'Núcleo de Análisis'.",
+            "dependencies": [
+              "19.3"
+            ],
+            "details": "El formato final debe ser un único archivo (ej. cultural_keywords.json) con una estructura clave-valor, donde la clave es el nombre de la variable y el valor es un array de strings (las keywords). Ejemplo: {\"nostalgia\": [\"recuerdo\", \"añoranza\", \"época dorada\"]}.",
+            "status": "pending",
+            "testStrategy": "Validar la sintaxis del archivo JSON/diccionario para asegurar que es parseable correctamente por un script de prueba."
+          },
+          {
+            "id": 5,
+            "title": "Validar y Refinar el Diccionario con Pruebas Manuales",
+            "description": "Presentar la estructura de datos final al equipo de análisis y realizar pruebas manuales aplicando la lógica de keywords sobre un conjunto de textos de ejemplo para evaluar su efectividad y refinar el diccionario.",
+            "dependencies": [
+              "19.4"
+            ],
+            "details": "Seleccionar 5-10 textos de muestra representativos. Ejecutar un script simple que resalte las keywords encontradas en los textos. Analizar los resultados (falsos positivos/negativos) en una sesión de revisión con el equipo.",
+            "status": "pending",
+            "testStrategy": "El criterio de éxito es que el equipo de análisis apruebe el diccionario final después de la ronda de pruebas y refinamientos, considerándolo listo para la integración en la Cloud Function."
+          }
+        ]
+      },
+      {
+        "id": 20,
+        "title": "Prueba de Integración End-to-End y Documentación",
+        "description": "Realizar una prueba completa del flujo de trabajo: ejecutar el scraper, cargar los datos crudos, ejecutar el script maestro para analizar y almacenar los resultados. Documentar los pasos para la ejecución del sistema.",
+        "details": "La prueba debe usar un conjunto pequeño pero representativo de datos. La documentación debe incluir cómo configurar el entorno y ejecutar cada componente.",
+        "testStrategy": "Verificar que los datos fluyen correctamente desde la extracción hasta el almacenamiento final en BigQuery y que los resultados son los esperados. La documentación debe ser clara y permitir a otro desarrollador ejecutar el sistema.",
+        "priority": "high",
+        "dependencies": [
+          18,
+          19
+        ],
+        "status": "pending",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Preparar Entorno y Conjunto de Datos de Prueba",
+            "description": "Configurar el entorno de ejecución y seleccionar un conjunto de datos pequeño pero representativo para la prueba de integración. Esto incluye la configuración de variables de entorno y la creación de un archivo de URLs de prueba.",
+            "dependencies": [],
+            "details": "Crear un archivo `test_urls.txt` con 3-5 URLs representativas. Asegurarse de que las variables de entorno para las credenciales de Instagram y Google Cloud estén definidas y accesibles por los scripts.",
+            "status": "pending",
+            "testStrategy": "Verificar que los scripts pueden leer las variables de entorno y que el archivo `test_urls.txt` existe y es legible."
+          },
+          {
+            "id": 2,
+            "title": "Ejecutar y Validar el Flujo del Scraper",
+            "description": "Ejecutar el script del scraper (Task 12) utilizando el conjunto de URLs de prueba para generar los archivos JSON de datos crudos.",
+            "dependencies": [
+              "20.1"
+            ],
+            "details": "El scraper debe iniciar sesión, navegar a las URLs especificadas en `test_urls.txt` y guardar los datos extraídos en una carpeta de salida designada como archivos JSON.",
+            "status": "pending",
+            "testStrategy": "Confirmar que el script se ejecuta sin errores y que se generan los archivos JSON correspondientes en el directorio de salida, verificando que su estructura y contenido son los esperados."
+          },
+          {
+            "id": 3,
+            "title": "Ejecutar y Validar la Carga de Datos a BigQuery",
+            "description": "Utilizar el script de carga (Task 16) para ingestar los archivos JSON generados por el scraper en la tabla 'raw_data' de BigQuery.",
+            "dependencies": [
+              "20.2"
+            ],
+            "details": "El script debe leer todos los archivos JSON de la carpeta de salida del scraper y cargarlos en un solo lote en la tabla de datos crudos de BigQuery.",
+            "status": "pending",
+            "testStrategy": "Realizar una consulta SQL a la tabla 'raw_data' en BigQuery para verificar que los registros del conjunto de prueba se han insertado correctamente y coinciden con los datos de los archivos JSON."
+          },
+          {
+            "id": 4,
+            "title": "Ejecutar y Validar el Script Maestro de Análisis",
+            "description": "Ejecutar el script maestro que lee los datos crudos desde BigQuery, realiza el análisis y almacena los resultados procesados en la tabla final de BigQuery.",
+            "dependencies": [
+              "20.3"
+            ],
+            "details": "Este script orquesta el proceso de análisis, leyendo de la tabla 'raw_data' y escribiendo los resultados en una tabla de destino, por ejemplo, 'analyzed_results'.",
+            "status": "pending",
+            "testStrategy": "Verificar que el script se ejecuta completamente. Consultar la tabla de resultados en BigQuery para confirmar que los datos analizados se han almacenado y que los resultados son coherentes con los datos de entrada."
+          },
+          {
+            "id": 5,
+            "title": "Redactar Documentación de Configuración y Ejecución",
+            "description": "Crear un documento (p. ej., README.md) que detalle todos los pasos necesarios para configurar el entorno y ejecutar el flujo de trabajo completo de principio a fin.",
+            "dependencies": [
+              "20.4"
+            ],
+            "details": "La documentación debe incluir: 1) Requisitos previos e instalación de dependencias. 2) Instrucciones para configurar las variables de entorno. 3) Comandos para ejecutar el scraper, el script de carga y el script de análisis en el orden correcto.",
+            "status": "pending",
+            "testStrategy": "Entregar la documentación a otro desarrollador para que la siga. El éxito se mide por su capacidad para replicar la ejecución del sistema sin asistencia adicional."
+          }
+        ]
+      }
+    ],
+    "metadata": {
+      "created": "2025-07-31T13:10:04.243Z",
+      "updated": "2025-07-31T13:18:31.860Z",
+      "description": "Tasks for master context"
+    }
+  }
+}

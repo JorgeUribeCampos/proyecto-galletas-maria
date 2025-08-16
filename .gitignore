@@ -1,4 +1,39 @@
- venv/
+ # Archivos y carpetas de nuestro entorno Python
+venv/
+
+# Archivos de nuestro recolector que no deben subirse
 recolector/.env
 recolector/conversacion_*.json
 recolector/chromedriver
+
+# Archivo de secretos principal generado por Task Master
+.env
+
+# --- Contenido generado por Task Master ---
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+dev-debug.log
+
+# Dependency directories
+node_modules/
+
+# Editor directories and files
+.idea
+.vscode
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# OS specific
+.DS_Store
+
+# Task files
+# tasks.json
+# tasks/

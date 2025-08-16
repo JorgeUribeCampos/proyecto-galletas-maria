@@ -1,0 +1,4 @@
+# maestro_ejecucion/requirements.txt
+google-cloud-bigquery==3.11.0
+requests==2.31.0
+google-auth==2.22.0

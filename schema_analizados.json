@@ -1,0 +1,28 @@
+[
+  { "name": "id_conversacion", "type": "STRING", "mode": "REQUIRED" },
+  { "name": "url_post", "type": "STRING", "mode": "NULLABLE" },
+  {
+    "name": "metadata_procesamiento",
+    "type": "RECORD",
+    "mode": "NULLABLE",
+    "fields": [
+      { "name": "fecha_analisis", "type": "TIMESTAMP", "mode": "NULLABLE" },
+      { "name": "version_modelo", "type": "STRING", "mode": "NULLABLE" }
+    ]
+  },
+  {
+    "name": "analisis_fuente_principal",
+    "type": "JSON",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "analisis_respuestas_comunidad",
+    "type": "JSON",
+    "mode": "REPEATED"
+  },
+  {
+    "name": "insights_agregados",
+    "type": "JSON",
+    "mode": "NULLABLE"
+  }
+]
