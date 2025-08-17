@@ -37,3 +37,18 @@ node_modules/
 # Task files
 # tasks.json
 # tasks/
+# Archivos sensibles
+*.json
+.env*
+galletas-piloto-ju-*.json
+
+# Build files de Next.js
+.next/
+*/.next/
+
+# Node modules
+node_modules/
+*/node_modules/
+
+# Archivos del sistema
+.DS_Store

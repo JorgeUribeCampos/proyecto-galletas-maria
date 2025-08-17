@@ -1,113 +1,76 @@
- # recolector/main.py - v7, con depuración de lectura de archivo
+ # maestro_ejecucion/main.py - v1, Versión funcional
 
-import time
-import json
 import os
-import dotenv
-from selenium import webdriver
-from selenium.webdriver.chrome.service import Service
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
+import json
+import requests
+from google.cloud import bigquery
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-dotenv.load_dotenv(os.path.join(BASE_DIR, '.env'))
+# --- CONFIGURACIÓN ---
+PROJECT_ID = "galletas-piloto-ju-250726"
+DATASET_ID = "analisis_galletas"
+TABLA_ORIGEN = "resultados_conversaciones"
+TABLA_DESTINO = "resultados_analizados"
 
-INSTAGRAM_USERNAME = os.getenv("INSTAGRAM_USERNAME")
-INSTAGRAM_PASSWORD = os.getenv("INSTAGRAM_PASSWORD")
+# URL de la Cloud Function ya configurada
+URL_ORQUESTADOR = "https://us-central1-galletas-piloto-ju-250726.cloudfunctions.net/orquestar_analisis_conversacion"
 
-def setup_driver():
-    print("Configurando el controlador del navegador...")
-    driver_path = os.path.join(BASE_DIR, 'chromedriver')
-    service = Service(executable_path=driver_path)
-    options = webdriver.ChromeOptions()
-    # options.add_argument('--headless')
-    driver = webdriver.Chrome(service=service, options=options)
-    print("Controlador configurado.")
-    return driver
+# Inicializa el cliente de BigQuery
+client = bigquery.Client(project=PROJECT_ID)
 
-def login_instagram(driver):
-    print("Iniciando sesión en Instagram...")
-    driver.get("https://www.instagram.com/accounts/login/")
-    time.sleep(5)
+# --- FUNCIONES PRINCIPALES ---
+
+def leer_conversaciones_de_bigquery():
+    """Lee las conversaciones no procesadas de la tabla de origen."""
+    print(f"Leyendo conversaciones de la tabla {TABLA_ORIGEN}...")
+    query = f"""
+        SELECT * FROM `{PROJECT_ID}.{DATASET_ID}.{TABLA_ORIGEN}`
+    """
     try:
-        user_input = driver.find_element(By.NAME, 'username')
-        pass_input = driver.find_element(By.NAME, 'password')
-        user_input.send_keys(INSTAGRAM_USERNAME)
-        pass_input.send_keys(INSTAGRAM_PASSWORD)
-        login_button = driver.find_element(By.XPATH, "//button[@type='submit']")
-        login_button.click()
-        print("Login enviado. Esperando a la página principal...")
-        time.sleep(10)
-        print("Sesión iniciada exitosamente.")
-        return True
+        query_job = client.query(query)
+        resultados = [dict(row) for row in query_job]
+        print(f"Se encontraron {len(resultados)} conversaciones para procesar.")
+        return resultados
     except Exception as e:
-        print(f"Error durante el inicio de sesión: {e}")
-        return False
+        print(f"Error al leer de BigQuery: {e}")
+        return []
 
-def recolectar_conversacion_instagram(driver, url):
-    if not url or not url.startswith(('http://', 'https://')):
-        print(f"ADVERTENCIA: URL inválida o vacía encontrada y omitida: '{url}'")
+def llamar_al_orquestador(conversacion):
+    """Envía una conversación a la Cloud Function para ser analizada."""
+    print(f"Enviando conversación {conversacion.get('id_conversacion', 'N/A')} para análisis...")
+    headers = {"Content-Type": "application/json"}
+    try:
+        data_payload = json.dumps({"data": conversacion})
+        response = requests.post(URL_ORQUESTADOR, data=data_payload, headers=headers)
+        response.raise_for_status()
+        print("Análisis recibido exitosamente.")
+        return response.json()
+    except requests.exceptions.RequestException as e:
+        print(f"Error al llamar a la Cloud Function: {e}")
+        print(f"Respuesta del servidor: {e.response.text if e.response else 'Sin respuesta'}")
         return None
 
-    print(f"Recolectando datos de: {url}")
-    driver.get(url)
-    time.sleep(5)
-
+def guardar_resultado_en_bigquery(resultado):
+    """Guarda el resultado del análisis en la tabla de destino."""
+    print(f"Guardando resultado para {resultado.get('id_conversacion', 'N/A')} en {TABLA_DESTINO}...")
+    tabla_ref = client.dataset(DATASET_ID).table(TABLA_DESTINO)
     try:
-        wait = WebDriverWait(driver, 10)
-        texto_principal_element = wait.until(EC.presence_of_element_located((By.XPATH, "//h1")))
-        texto_principal = texto_principal_element.text
-        print(f"Post principal encontrado: '{texto_principal[:50]}...'")
-
-        elementos_comentarios = driver.find_elements(By.XPATH, "//ul//h3/..//span")
-        respuestas = []
-        print(f"Procesando {len(elementos_comentarios)} comentarios encontrados...")
-        for i, elemento in enumerate(elementos_comentarios):
-            respuestas.append({
-                "id_respuesta": f"comment_{i+1}",
-                "tipo_contenido": "comentario",
-                "texto_input": elemento.text,
-                "metadatos": {}
-            })
-
-        capsula = {
-            "id_conversacion": f"instagram_{url.split('/')[-2]}",
-            "fuente_principal": {"tipo_contenido": "post_creador", "texto_input": texto_principal, "metadatos": {"url_post": url}},
-            "respuestas_comunidad": respuestas
-        }
-        return capsula
+        errors = client.insert_rows_json(tabla_ref, [resultado])
+        if not errors:
+            print("Resultado guardado exitosamente.")
+        else:
+            print(f"Errores al guardar en BigQuery: {errors}")
     except Exception as e:
-        print(f"Error al recolectar datos de {url}: {e}")
-        return None
+        print(f"Error inesperado al guardar en BigQuery: {e}")
 
-def guardar_json(data, filename):
-    ruta_completa = os.path.join(BASE_DIR, filename)
-    with open(ruta_completa, 'w', encoding='utf-8') as f:
-        json.dump(data, f, ensure_ascii=False, indent=4)
-    print(f"Datos guardados exitosamente en: {ruta_completa}")
-
+# --- PUNTO DE ENTRADA PRINCIPAL ---
 if __name__ == "__main__":
-    ruta_urls = os.path.join(BASE_DIR, 'urls.txt')
-
-    with open(ruta_urls, 'r') as f:
-        urls_a_procesar = [line.strip() for line in f if line.strip()]
-
-    # --- LÍNEA DE DEPURACIÓN CLAVE ---
-    print(f"DEBUG: Se encontraron {len(urls_a_procesar)} URLs en el archivo.")
-    print(f"DEBUG: Contenido leído: {urls_a_procesar[:5]}") # Mostramos las primeras 5 para no saturar
-
-    if not urls_a_procesar:
-        print("El archivo urls.txt parece estar vacío o no se pudo leer correctamente.")
+    conversaciones = leer_conversaciones_de_bigquery()
+    if conversaciones:
+        for conv in conversaciones:
+            resultado_analisis = llamar_al_orquestador(conv)
+            if resultado_analisis:
+                guardar_resultado_en_bigquery(resultado_analisis)
+            print("-" * 20)
+        print("Proceso de análisis completado.")
     else:
-        driver = setup_driver()
-        if login_instagram(driver):
-            for i, url in enumerate(urls_a_procesar):
-                capsula_resultado = recolectar_conversacion_instagram(driver, url)
-                if capsula_resultado:
-                    nombre_archivo = f"conversacion_{i+1}.json"
-                    guardar_json(capsula_resultado, nombre_archivo)
-                time.sleep(3)
-
-        driver.quit()
-        print("Proceso de recolección completado.")
+        print("No hay conversaciones que procesar.")

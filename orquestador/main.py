@@ -1,61 +1,49 @@
-# orquestador/main.py - El Director de Orquesta
+ # maestro_ejecucion/main.py - v4, Versión de diagnóstico para generar esquema
 
-import functions_framework
+import os
 import json
-import requests # Librería para hacer llamadas a nuestro otro robot
+import requests
+from google.cloud import bigquery
 
-# La dirección de nuestro robot especialista. La obtuvimos en la Fase 2.
-URL_NUCLEO_ANALISIS = "https://us-central1-galletas-piloto-ju-250726.cloudfunctions.net/analizar_texto_individual"
+PROJECT_ID = "galletas-piloto-ju-250726"
+DATASET_ID = "analisis_galletas"
+TABLA_ORIGEN = "resultados_conversaciones"
+URL_ORQUESTADOR = "https://us-central1-galletas-piloto-ju-250726.cloudfunctions.net/orquestar_analisis_conversacion"
+client = bigquery.Client(project=PROJECT_ID)
 
-def llamar_analizador(texto_a_analizar):
-    """Función auxiliar que llama a nuestro robot especialista."""
+def leer_conversaciones_de_bigquery():
+    print(f"Leyendo conversaciones de la tabla {TABLA_ORIGEN}...")
+    query = f"SELECT * FROM `{PROJECT_ID}.{DATASET_ID}.{TABLA_ORIGEN}` LIMIT 1" # Leemos solo 1
     try:
-        headers = {'Content-Type': 'application/json'}
-        payload = json.dumps({"texto": texto_a_analizar})
-
-        response = requests.post(URL_NUCLEO_ANALISIS, data=payload, headers=headers, timeout=60)
-
-        if response.status_code == 200:
-            return response.json()
-        else:
-            print(f"Error al llamar al núcleo de análisis. Status: {response.status_code}, Respuesta: {response.text}")
-            return {"error": "Fallo al analizar texto", "detalle": response.text}
+        query_job = client.query(query)
+        resultados = [dict(row) for row in query_job]
+        print(f"Se encontró {len(resultados)} conversación para la prueba de esquema.")
+        return resultados
     except Exception as e:
-        print(f"Excepción al llamar al núcleo de análisis: {e}")
-        return {"error": "Excepción durante la llamada", "detalle": str(e)}
+        print(f"Error al leer de BigQuery: {e}")
+        return []
 
+def llamar_al_orquestador(conversacion):
+    print(f"Enviando conversación {conversacion.get('id_conversacion', 'N/A')} para análisis...")
+    try:
+        response = requests.post(URL_ORQUESTADOR, json=conversacion)
+        response.raise_for_status()
+        print("Análisis recibido exitosamente.")
+        return response.json()
+    except requests.exceptions.RequestException as e:
+        print(f"Error al llamar a la Cloud Function: {e}")
+        return None
 
-@functions_framework.http
-def orquestar_analisis_conversacion(request):
-    """
-    Recibe una 'cápsula de conversación', la procesa y devuelve un análisis completo.
-    """
-    # 1. Recibir y validar la cápsula de conversación
-    capsula_conversacion = request.get_json(silent=True)
-    if not capsula_conversacion or 'fuente_principal' not in capsula_conversacion:
-        return 'Error: Se esperaba una "cápsula de conversación" en formato JSON.', 400
+def guardar_localmente(resultado, filename):
+    """Guarda el resultado en un archivo JSONL local."""
+    with open(filename, 'w', encoding='utf-8') as f:
+        f.write(json.dumps(resultado, ensure_ascii=False) + '\n')
+    print(f"Resultado de ejemplo guardado en: {filename}")
 
-    print("Orquestador iniciado. Analizando fuente principal...")
-
-    # 2. Analizar la fuente principal
-    texto_principal = capsula_conversacion.get('fuente_principal', {}).get('texto_input', '')
-    resultado_principal = llamar_analizador(texto_principal)
-
-    # 3. Analizar los comentarios de la comunidad
-    print("Analizando respuestas de la comunidad...")
-    resultados_comunidad = []
-    comentarios = capsula_conversacion.get('respuestas_comunidad', [])
-    for comentario in comentarios:
-        texto_comentario = comentario.get('texto_input', '')
-        resultado_comentario = llamar_analizador(texto_comentario)
-        resultados_comunidad.append(resultado_comentario)
-
-    # 4. Ensamblar el resultado final (sin agregación por ahora)
-    resultado_final = {
-        "id_conversacion": capsula_conversacion.get('id_conversacion', 'sin_id'),
-        "analisis_fuente_principal": resultado_principal,
-        "analisis_respuestas_comunidad": resultados_comunidad
-    }
-
-    print("Orquestación completada.")
-    return resultado_final, 200, {'Content-Type': 'application/json'}
+if __name__ == "__main__":
+    conversaciones = leer_conversaciones_de_bigquery()
+    if conversaciones:
+        resultado_analisis = llamar_al_orquestador(conversaciones[0])
+        if resultado_analisis:
+            guardar_localmente(resultado_analisis, "resultado_analizado_ejemplo.jsonl")
+        print("Proceso de generación de esquema completado.")

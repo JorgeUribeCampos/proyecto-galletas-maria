@@ -1,77 +1,88 @@
- cat << EOF > maestro_ejecucion/main.py
-# maestro_ejecucion/main.py
+ # maestro_ejecucion/main.py - v3, con envío de JSON robusto
 
 import os
 import json
-import time
 import requests
 from google.cloud import bigquery
 
-# --- CONFIGURACIÓN DEL PROYECTO ---
-# Asegúrate de que estos nombres coincidan con lo que hemos creado.
+# --- CONFIGURACIÓN ---
 PROJECT_ID = "galletas-piloto-ju-250726"
 DATASET_ID = "analisis_galletas"
-TABLA_ORIGEN_ID = "resultados_conversaciones"
-TABLA_DESTINO_ID = "resultados_analizados"
+TABLA_ORIGEN = "resultados_conversaciones"
+TABLA_DESTINO = "resultados_analizados"
+
 URL_ORQUESTADOR = "https://us-central1-galletas-piloto-ju-250726.cloudfunctions.net/orquestar_analisis_conversacion"
 
-# Inicializamos el cliente de BigQuery.
-# El cliente usará automáticamente las credenciales de tu gcloud local.
 client = bigquery.Client(project=PROJECT_ID)
 
-def leer_conversaciones_de_bigquery():
-    """Lee todas las filas de la tabla de origen."""
-    print(f"Leyendo conversaciones de la tabla: {TABLA_ORIGEN_ID}...")
-    tabla_ref = client.dataset(DATASET_ID).table(TABLA_ORIGEN_ID)
-    rows = client.list_rows(tabla_ref)
-    print(f"Se encontraron {rows.total_rows} conversaciones para analizar.")
-    return list(rows)
+# --- FUNCIONES PRINCIPALES ---
 
-def llamar_al_orquestador(conversacion_cruda):
-    """Envía una conversación al Orquestador y devuelve el análisis."""
-    print(f"Enviando conversación {conversacion_cruda['id_conversacion']} al analizador...")
-    
-    # El Orquestador espera un JSON, no un objeto de BigQuery.
-    # Convertimos la fila de BigQuery a un diccionario simple.
-    payload = dict(conversacion_cruda)
-    
+def leer_conversaciones_de_bigquery():
+    """Lee las conversaciones no procesadas de la tabla de origen."""
+    print(f"Leyendo conversaciones de la tabla {TABLA_ORIGEN}...")
+    query = f"""
+        SELECT * FROM `{PROJECT_ID}.{DATASET_ID}.{TABLA_ORIGEN}`
+    """
     try:
-        headers = {'Content-Type': 'application/json'}
-        response = requests.post(URL_ORQUESTADOR, json=payload, headers=headers, timeout=120)
-        
-        if response.status_code == 200:
-            print("Análisis recibido exitosamente.")
-            return response.json()
-        else:
-            print(f"  ERROR: El Orquestador devolvió un error. Status: {response.status_code}")
-            return None
+        query_job = client.query(query)
+        resultados = [dict(row) for row in query_job]
+        print(f"Se encontraron {len(resultados)} conversaciones para procesar.")
+        return resultados
     except Exception as e:
-        print(f"  ERROR: Fallo en la comunicación con el Orquestador: {e}")
+        print(f"Error al leer de BigQuery: {e}")
+        return []
+
+def llamar_al_orquestador(conversacion):
+    """Envía una conversación a la Cloud Function para ser analizada."""
+    print(f"Enviando conversación {conversacion.get('id_conversacion', 'N/A')} para análisis...")
+    try:
+        response = requests.post(URL_ORQUESTADOR, json=conversacion)
+        response.raise_for_status()
+        print("Análisis recibido exitosamente.")
+        return response.json()
+    except requests.exceptions.RequestException as e:
+        print(f"Error al llamar a la Cloud Function: {e}")
+        print(f"Respuesta del servidor: {e.response.text if e.response else 'Sin respuesta'}")
         return None
 
-def guardar_resultado_en_bigquery(resultado_analizado):
-    """Guarda un resultado analizado en la tabla de destino."""
-    tabla_ref = client.dataset(DATASET_ID).table(TABLA_DESTINO_ID)
-    errors = client.insert_rows_json(tabla_ref, [resultado_analizado])
-    if not errors:
-        print(f"Resultado para {resultado_analizado['id_conversacion']} guardado en BigQuery.")
-    else:
-        print(f"  ERROR al guardar en BigQuery: {errors}")
+def guardar_resultado_en_bigquery(resultado):
+    """Guarda el resultado del análisis en la tabla de destino."""
+    print(f"Guardando resultado para {resultado.get('id_conversacion', 'N/A')} en {TABLA_DESTINO}...")
+    tabla_ref = client.dataset(DATASET_ID).table(TABLA_DESTINO)
+    try:
+        errors = client.insert_rows_json(tabla_ref, [resultado])
+        if not errors:
+            print("Resultado guardado exitosamente.")
+        else:
+            print(f"Errores al guardar en BigQuery: {errors}")
+    except Exception as e:
+        print(f"Error inesperado al guardar en BigQuery: {e}")
 
+# --- PUNTO DE ENTRADA PRINCIPAL ---
 if __name__ == "__main__":
-    print("--- INICIANDO SCRIPT MAESTRO DE ANÁLISIS ---")
-    
     conversaciones = leer_conversaciones_de_bigquery()
-    
-    for i, conversacion in enumerate(conversaciones):
-        print(f"\n--- Procesando conversación {i+1}/{len(conversaciones)} ---")
-        resultado = llamar_al_orquestador(conversacion)
-        
-        if resultado:
-            guardar_resultado_en_bigquery(resultado)
-        
-        # Pausa respetuosa para no sobrecargar nuestra Cloud Function
-        time.sleep(1) 
-        
-    print("\n--- PROCESO DE ANÁLISIS COMPLETADO ---")
-EOF
+    if conversaciones:
+        # Sobrescribimos la tabla con los nuevos resultados para asegurar limpieza
+        tabla_a_sobrescribir = client.get_table(f"{PROJECT_ID}.{DATASET_ID}.{TABLA_DESTINO}")
+        job_config = bigquery.LoadJobConfig(
+            schema=tabla_a_sobrescribir.schema,
+            write_disposition="WRITE_TRUNCATE",
+        )
+
+        resultados_analizados = []
+        for conv in conversaciones:
+            resultado = llamar_al_orquestador(conv)
+            if resultado:
+                resultados_analizados.append(resultado)
+            print("-" * 20)
+
+        if resultados_analizados:
+            job = client.load_table_from_json(
+                resultados_analizados, tabla_a_sobrescribir, job_config=job_config
+            )
+            job.result() # Espera a que el trabajo termine
+            print(f"Se han guardado {len(resultados_analizados)} resultados en la tabla {TABLA_DESTINO}.")
+
+        print("Proceso de análisis completado.")
+    else:
+        print("No hay conversaciones que procesar.")
